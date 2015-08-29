@@ -16,7 +16,8 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
         return _name
     }
     
-    public var connected : Bool {
+    //  Connection
+    private var _connected : Bool {
         get{
             if bandClient != nil {
                 return bandClient.isDeviceConnected
@@ -48,17 +49,24 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
             }
         }
     }
-    
-    private var _accelerometerOn = false
-    public var accelerometerOn : Bool {
+    public var connected : Bool {
         get{
-            return _accelerometerOn
+            return _connected
         }
-        set{
-            if newValue == _accelerometerOn {
+    }
+    public func connect() {
+        _connected = true
+    }
+    public func disconnect() {
+        _connected = false
+    }
+    
+    private var _accelerometerOn : Bool = false{
+        didSet{
+            if oldValue == _accelerometerOn {
                 //  no change
             } else {
-                if newValue {
+                if _accelerometerOn {
                     //  try to turn on accelerometer
                     if handler != nil {
                         do{
@@ -85,6 +93,17 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
             }
         }
     }
+    public var accelerometerOn : Bool {
+        get{
+            return _accelerometerOn
+        }
+    }
+    public func startAccelerometer() {
+        _accelerometerOn = true
+    }
+    public func stopAccelerometer() {
+        _accelerometerOn = false
+    }
     
     private var _handler : ([Double] -> ())!
     public var handler : ([Double] -> ())! {
@@ -96,34 +115,20 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
         }
     }
     
-    private let connectedNotificationName = "WEARABLE_KIT_NOTIFICATION_DEVICE_MICROSOFT_BAND_CONNECTED"
-    private let disconnectedNotificationName = "WEARABLE_KIT_NOTIFICATION_DEVICE_MICROSOFT_BAND_DISCONNECTED"
-    public var connectedNotification : NSNotification {
-        get{
-            return NSNotification(name: connectedNotificationName, object: nil)
-        }
-    }
-    
-    public var disconnectedNotification : NSNotification {
-        get{
-            return NSNotification(name: disconnectedNotificationName, object: nil)
-        }
-    }
-    
     public func registerConnectedNotification(observer: AnyObject, selector: Selector) {
-        NSNotificationCenter.defaultCenter().addObserver(observer, selector: selector, name: connectedNotificationName, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(observer, selector: selector, name: WKNotifications.deviceDidConnect(self).name, object: nil)
     }
     
     public func deregisterConnectedNotification(observer: AnyObject) {
-        NSNotificationCenter.defaultCenter().removeObserver(observer, name: connectedNotificationName, object: nil)
+        NSNotificationCenter.defaultCenter().removeObserver(observer, name: WKNotifications.deviceDidConnect(self).name, object: nil)
     }
 
     public func registerDisconnectedNotification(observer: AnyObject, selector: Selector) {
-        NSNotificationCenter.defaultCenter().addObserver(observer, selector: selector, name: disconnectedNotificationName, object: nil)
+        NSNotificationCenter.defaultCenter().addObserver(observer, selector: selector, name: WKNotifications.deviceDidDisconnect(self).name, object: nil)
     }
     
     public func deregisterDisconnectedNotification(observer: AnyObject) {
-        NSNotificationCenter.defaultCenter().removeObserver(observer, name: disconnectedNotificationName, object: nil)
+        NSNotificationCenter.defaultCenter().removeObserver(observer, name: WKNotifications.deviceDidDisconnect(self).name, object: nil)
     }
 
     
@@ -144,6 +149,8 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
         }
     }
     
+
+    
     private var bandClient : MSBClient!
     private var soloQueue : NSOperationQueue {
         get{
@@ -158,11 +165,11 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
         print(error)
     }
     public func clientManager(clientManager: MSBClientManager!, clientDidConnect client: MSBClient!) {
-        NSNotificationCenter.defaultCenter().postNotification(connectedNotification)
+        NSNotificationCenter.defaultCenter().postNotification(WKNotifications.deviceDidConnect(self))
         print("WKMicrosoftBand Log: Microsoft Band is connected")
     }
     public func clientManager(clientManager: MSBClientManager!, clientDidDisconnect client: MSBClient!) {
-        NSNotificationCenter.defaultCenter().postNotification(disconnectedNotification)
+        NSNotificationCenter.defaultCenter().postNotification(WKNotifications.deviceDidDisconnect(self))
         print("WKMicrosoftBand Log: Microsoft Band is disconnected")
     }
 }

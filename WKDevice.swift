@@ -10,11 +10,16 @@ import UIKit
 
 public protocol WKDevice : NSObjectProtocol {
     var name : String {get}
-    var connected : Bool {get set}
-    var accelerometerOn : Bool {get set}
+    
+    var connected : Bool {get}
+    func connect()
+    func disconnect()
+    
+    var accelerometerOn : Bool {get}
+    func startAccelerometer()
+    func stopAccelerometer()
+    
     var handler : ([Double] -> ())! {get set}
-    var connectedNotification : NSNotification {get}
-    var disconnectedNotification : NSNotification {get}
     func registerConnectedNotification(observer:AnyObject, selector: Selector)
     func deregisterConnectedNotification(observer:AnyObject)
     func registerDisconnectedNotification(observer:AnyObject, selector: Selector)
