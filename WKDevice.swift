@@ -11,6 +11,8 @@ import UIKit
 public protocol WKDevice : NSObjectProtocol {
     var name : String {get}
     
+    static var sharedDevice : WKDevice {get}
+    
     var connected : Bool {get}
     func connect()
     func disconnect()
@@ -19,10 +21,11 @@ public protocol WKDevice : NSObjectProtocol {
     func startAccelerometer()
     func stopAccelerometer()
     
-    var handler : ([Double] -> ())! {get set}
+    var accelerometerDataHandler : ([Double] -> ())? {get set}
+    
     func registerConnectedNotification(observer:AnyObject, selector: Selector)
     func deregisterConnectedNotification(observer:AnyObject)
     func registerDisconnectedNotification(observer:AnyObject, selector: Selector)
     func deregisterDisconnectedNotification(observer:AnyObject)
-    static var sharedWKDevice : WKDevice {get}
+
 }

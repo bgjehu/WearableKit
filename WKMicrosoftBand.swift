@@ -16,6 +16,8 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
         return _name
     }
     
+    public static var sharedDevice : WKDevice = WKMicrosoftBand()
+    
     //  Connection
     private var _connected : Bool {
         get{
@@ -68,22 +70,18 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
             } else {
                 if _accelerometerOn {
                     //  try to turn on accelerometer
-                    if handler != nil {
-                        do{
-                            try bandClient.sensorManager.startAccelerometerUpdatesToQueue(soloQueue, withHandler: { (data, error) -> Void in
-                                if let data = data {
-                                    //  there is data
-                                    let dataf = [data.x,data.y,data.z]
-                                    self.handler(dataf)
-                                } else {
-                                    //  Do nothing
-                                }
-                            })
-                            _accelerometerOn = true
-                        } catch let error as NSError {print(error)}
-                    } else {
-                        print("WKBand Error: Cannot set accelerometerOn = true, handler is not set yet")
-                    }
+                    do{
+                        try bandClient.sensorManager.startAccelerometerUpdatesToQueue(soloQueue, withHandler: { (data, error) -> Void in
+                            if let data = data {
+                                //  there is data
+                                let dataf = [data.x,data.y,data.z]
+                                self.accelerometerDataHandler?(dataf)
+                            } else {
+                                //  Do nothing
+                            }
+                        })
+                        _accelerometerOn = true
+                    } catch let error as NSError {print(error)}
                 } else {
                     do{
                         try bandClient.sensorManager.stopAccelerometerUpdatesErrorRef()
@@ -105,15 +103,7 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
         _accelerometerOn = false
     }
     
-    private var _handler : ([Double] -> ())!
-    public var handler : ([Double] -> ())! {
-        get{
-            return _handler
-        }
-        set{
-            _handler = newValue
-        }
-    }
+    public var accelerometerDataHandler : ([Double] -> ())?
     
     public func registerConnectedNotification(observer: AnyObject, selector: Selector) {
         NSNotificationCenter.defaultCenter().addObserver(observer, selector: selector, name: WKNotifications.deviceDidConnect(self).name, object: nil)
@@ -132,13 +122,7 @@ public class WKMicrosoftBand: NSObject, WKDevice, MSBClientManagerDelegate {
     }
 
     
-    public static var sharedWKDevice : WKDevice {
-        get{
-            return (UIApplication.sharedApplication().delegate as! WKAppDelegate).sharedWKDevice()
-        }
-    }
-    
-    public override init() {
+    private override init() {
         super.init()
         let clients = MSBClientManager.sharedManager().attachedClients()
         if clients.count > 0 {
